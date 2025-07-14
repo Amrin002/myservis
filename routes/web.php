@@ -1,0 +1,80 @@
+<?php
+
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\PelangganController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ServisanController;
+use App\Http\Controllers\SparepartController;
+use App\Http\Controllers\ThemeController;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
+
+Route::get('/', function () {
+    return redirect()->route('dashboard');
+});
+
+Route::middleware('auth')->group(function () {
+    // Profile routes
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Dashboard route - FIXED: menggunakan name 'dashboard' bukan 'dashboard.index'
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    // Dashboard Routes
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
+
+    // API Routes untuk Chart Data
+    Route::get('/api/chart-data', [DashboardController::class, 'getChartData'])->name('dashboard.chart-data');
+
+
+    // Resource routes
+    Route::resource('pelanggan', PelangganController::class);
+    Route::resource('servisan', ServisanController::class);
+
+    Route::get('/servisan-filter', [ServisanController::class, 'filter'])->name('servisan.filter');
+    Route::patch('/servisan/{servisan}/status', [ServisanController::class, 'updateStatus'])->name('servisan.updateStatus');
+    Route::patch('/servisan/{id}/complete', [ServisanController::class, 'markAsCompleted'])->name('servisan.complete');
+    Route::patch('/servisan/{id}/deliver', [ServisanController::class, 'markAsDelivered'])->name('servisan.deliver');
+    Route::get('/servisan/{id}/get', [ServisanController::class, 'getServisan'])->name('servisan.get');
+    Route::get('/servisan-print/{id}', [ServisanController::class, 'printReceipt'])->name('servisan.print');
+
+    // Additional pelanggan routes
+    Route::get('/pelanggan/{pelanggan}/get', [PelangganController::class, 'getPelanggan'])->name('pelanggan.get');
+    Route::get('/pelanggan-search', [PelangganController::class, 'search'])->name('pelanggan.search');
+    Route::get('/pelanggan-export', [PelangganController::class, 'export'])->name('pelanggan.export');
+    // Alternative delete route (if needed)
+    Route::delete('/pelanggan/{id}/delete', [PelangganController::class, 'destroy'])->name('pelanggan.delete');
+
+
+    Route::resource('spareparts', SparepartController::class);
+    // Rute untuk Sparepart
+    Route::prefix('spareparts')->name('spareparts.')->group(function () {
+        // Rute utama (index)
+        Route::get('/', [SparepartController::class, 'index'])->name('index');
+
+        // Rute untuk membuat sparepart baru
+        Route::get('/create', [SparepartController::class, 'create'])->name('create');
+        Route::post('/', [SparepartController::class, 'store'])->name('store');
+
+        // Rute untuk menampilkan detail sparepart
+        Route::get('/{sparepart}', [SparepartController::class, 'show'])->name('show');
+
+        // Rute untuk edit sparepart
+        Route::get('/{sparepart}/edit', [SparepartController::class, 'edit'])->name('edit');
+        Route::put('/{sparepart}', [SparepartController::class, 'update'])->name('update');
+
+        // Rute untuk menghapus sparepart
+        Route::delete('/{sparepart}', [SparepartController::class, 'destroy'])->name('destroy');
+
+        // Rute khusus untuk manajemen stok
+        Route::post('/{sparepart}/tambah-stok', [SparepartController::class, 'tambahStok'])->name('tambah-stok');
+        Route::post('/{sparepart}/kurangi-stok', [SparepartController::class, 'kurangiStok'])->name('kurangi-stok');
+    });
+
+    Route::post('/theme/toggle', [ThemeController::class, 'toggle'])->name('theme.toggle');
+    Route::get('/theme/current', [ThemeController::class, 'current'])->name('theme.current');
+});
+
+require __DIR__ . '/auth.php';
