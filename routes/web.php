@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\KelolaTuserController;
+use App\Http\Controllers\Tuser\DashboardController as tuser;
 use App\Http\Controllers\PelangganController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ServisanController;
@@ -73,8 +75,27 @@ Route::middleware('auth')->group(function () {
         Route::post('/{sparepart}/kurangi-stok', [SparepartController::class, 'kurangiStok'])->name('kurangi-stok');
     });
 
+    // Kelola admin 
+    // Resource route untuk CRUD teknisi
+    Route::resource('kelolatuser', KelolaTuserController::class);
+
+    // Route tambahan untuk toggle status
+    Route::patch('kelolatuser/{tuser}/toggle-status', [KelolaTuserController::class, 'toggleStatus'])
+        ->name('kelolatuser.toggle-status');
+
+    // Route untuk bulk actions
+    Route::post('kelolatuser/bulk-action', [KelolaTuserController::class, 'bulkAction'])
+        ->name('kelolatuser.bulk-action');
+
     Route::post('/theme/toggle', [ThemeController::class, 'toggle'])->name('theme.toggle');
     Route::get('/theme/current', [ThemeController::class, 'current'])->name('theme.current');
+});
+
+
+Route::middleware(['web', 'tuser.auth'])->prefix('tuser')->name('tuser.')->group(function () {
+    // Dashboard Route
+    Route::get('tuser/dashboard', [tuser::class, 'index'])
+        ->name('tuser.dashboard');
 });
 
 require __DIR__ . '/auth.php';

@@ -25,7 +25,14 @@ class Servisan extends Model
         'status',
         'lunas',
         'tanggal_masuk',
-        'tanggal_selesai'
+        'tanggal_selesai',
+
+        // New fillable fields for Tuser
+        'tuser_id',
+        'is_prioritas',
+        'durasi_servis',
+        'mulai_servis',
+        'last_status_update'
     ];
 
     protected $casts = [
@@ -34,7 +41,10 @@ class Servisan extends Model
         'estimasi_biaya' => 'decimal:2',
         'biaya_akhir' => 'decimal:2',
         'dp' => 'decimal:2',
-        'lunas' => 'boolean'
+        'lunas' => 'boolean',
+        'is_prioritas' => 'boolean',
+        'mulai_servis' => 'datetime',
+        'last_status_update' => 'datetime'
     ];
 
     public function pelanggan()
@@ -42,6 +52,11 @@ class Servisan extends Model
         return $this->belongsTo(Pelanggan::class);
     }
 
+    // New relationship with Tuser
+    public function tuser()
+    {
+        return $this->belongsTo(Tuser::class, 'tuser_id');
+    }
     /**
      * Get status label attribute
      */
@@ -184,5 +199,82 @@ class Servisan extends Model
     public function isCompleted()
     {
         return in_array($this->status, ['selesai', 'diambil']);
+    }
+
+    /**
+     * Scope untuk servisan yang dapat diambil Tuser
+     */
+    public function scopeAvailableTuser($query)
+    {
+        return $query->whereIn('status', ['menunggu', 'proses'])
+            ->whereNull('tuser_id');
+    }
+
+    /**
+     * Scope untuk servisan prioritas
+     */
+    public function scopePrioritas($query)
+    {
+        return $query->where('is_prioritas', true);
+    }
+
+    /**
+     * Cek dan set prioritas servisan
+     */
+    public function cekPrioritas()
+    {
+        // Jika sudah lebih dari 2 hari dalam status menunggu
+        if (
+            $this->status === 'menunggu' &&
+            Carbon::parse($this->tanggal_masuk)->diffInDays(now()) > 2
+        ) {
+            $this->is_prioritas = true;
+            $this->save();
+        }
+
+        // Jika sudah lebih dari 4 hari dalam proses
+        if (
+            $this->status === 'proses' &&
+            Carbon::parse($this->mulai_servis)->diffInDays(now()) > 4
+        ) {
+            $this->is_prioritas = true;
+            $this->save();
+        }
+
+        return $this->is_prioritas;
+    }
+    /**
+     * Update status servisan khusus untuk Tuser
+     */
+    public function updateStatusTuser($status, $tuser_id = null)
+    {
+        // Update status
+        $this->status = $status;
+        $this->last_status_update = now();
+
+        // Set tuser yang mengerjakan jika ada
+        if ($tuser_id) {
+            $this->tuser_id = $tuser_id;
+        }
+
+        // Set waktu mulai atau selesai servis
+        if ($status === 'proses') {
+            $this->mulai_servis = now();
+        } elseif ($status === 'selesai') {
+            $this->tanggal_selesai = now();
+
+            // Hitung durasi servis
+            if ($this->mulai_servis) {
+                $this->durasi_servis = Carbon::parse($this->mulai_servis)
+                    ->diffInMinutes(now());
+            }
+        }
+
+        $this->save();
+
+        // Cek prioritas
+        $this->cekPrioritas();
+
+        return $this;
     }
 }

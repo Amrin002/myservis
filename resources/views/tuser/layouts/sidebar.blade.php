@@ -7,7 +7,8 @@
 
         <ul class="nav nav-pills flex-column">
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
+                <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}"
+                    href="{{ route('tuser.tuser.dashboard') }}">
                     <i class="fas fa-tachometer-alt me-2"></i>
                     Dashboard
                 </a>
@@ -20,13 +21,7 @@
                     Kelola Pelanggan
                 </a>
             </li>
-            <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('admin.tuser.*') ? 'active' : '' }}"
-                    href="{{ route('kelolatuser.index') }}">
-                    <i class="fas fa-users-cog me-2"></i>
-                    Kelola Teknisi
-                </a>
-            </li>
+
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('servisan.*') ? 'active' : '' }}"
                     href="{{ route('servisan.index') }}">

@@ -1,15 +1,15 @@
 <?php
 
-namespace App\Http\Controllers\Auth;
+namespace App\Http\Controllers\Tuser\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\Models\Tuser;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
 
 class RegisteredUserController extends Controller
@@ -19,7 +19,7 @@ class RegisteredUserController extends Controller
      */
     public function create(): View
     {
-        return view('auth.register');
+        return view('tuser.auth.register');
     }
 
     /**
@@ -31,20 +31,24 @@ class RegisteredUserController extends Controller
     {
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:' . Tuser::class],
+            'phone' => ['nullable', 'string', 'max:20'],
+            'skill_category' => ['nullable', 'string', 'max:100'],
+            'password' => ['required', 'confirmed', Password::defaults()],
         ]);
 
-        $user = User::create([
+        $tuser = Tuser::create([
             'name' => $request->name,
             'email' => $request->email,
+            'phone' => $request->phone,
+            'skill_category' => $request->skill_category,
             'password' => Hash::make($request->password),
         ]);
 
-        event(new Registered($user));
+        event(new Registered($tuser));
 
-        Auth::login($user);
+        Auth::guard('tuser')->login($tuser);
 
-        return redirect(route('dashboard', absolute: false));
+        return redirect(route('tuser.tuser.dashboard'));
     }
 }

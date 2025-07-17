@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Tuser\Auth\AuthenticatedSessionController as tuser;
 use App\Http\Controllers\Auth\ConfirmablePasswordController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
@@ -8,7 +9,9 @@ use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Tuser\Auth\RegisteredUserController as newTuser;
 use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\Tuser\DashboardController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -56,4 +59,27 @@ Route::middleware('auth')->group(function () {
 
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
+});
+
+Route::middleware(['web', 'tuser.guest'])->prefix('tuser')->name('tuser.')->group(function () {
+    // Login Routes
+    Route::get('login', [tuser::class, 'create'])
+        ->name('login');
+    Route::post('login', [tuser::class, 'store']);
+
+    // Registration Routes
+    Route::get('register', [newTuser::class, 'create'])
+        ->name('register');
+    Route::post('register', [newTuser::class, 'store']);
+});
+
+// Authenticated Tuser Routes
+Route::middleware(['web', 'tuser.auth'])->prefix('tuser')->name('tuser.')->group(function () {
+    // Logout Route
+    Route::post('logout', [tuser::class, 'destroy'])
+        ->name('logout');
+
+    // Dashboard Route
+    Route::get('dashboard/tuser', [DashboardController::class, 'index'])
+        ->name('tuser.dashboard');
 });
